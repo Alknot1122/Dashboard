@@ -1,15 +1,15 @@
 <?php
-    $servername = "localhost";
-    $username = "root";
-    $password = "root";
-    $dbname = "admin_dashboard";
+$servername = "localhost";
+$username = "root";
+$password = "root";
+$dbname = "admin_dashboard";
 
-    try {
-        $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    } catch(PDOException $e) {
-        die("Connection failed: " . $e->getMessage());
-    }
+try {
+    $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch(PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="light">
@@ -21,7 +21,7 @@
     <title>Dashboard</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css">
     <script src="https://kit.fontawesome.com/ae360af17e.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css"> 
 </head>
 
 <body>
@@ -60,7 +60,7 @@
                             $formatted_id = sprintf("ID %02d: %s", $row['sensor_id'], $row['name']);
                         ?>
                         <div class="col-12 col-md-3 d-flex">
-                            <div class="card flex-fill border-0 shadow-lg">
+                            <div class="card flex-fill border-0 shadow-lg" data-sensor-id="<?php echo $row['sensor_id']; ?>">
                                 <div class="card-body py-4">
                                     <div class="d-flex flex-column align-items-center">
                                         <p class="text-muted mb-2"><?php echo $formatted_id; ?></p>
@@ -85,8 +85,30 @@
             </main>
         </div>
     </div>
+
+    <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logModalLabel">Log History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul id="logList" class="list-group">
+                    </ul>
+                    <div id="logMessage"></div> 
+                    <ul id="pagination" class="pagination">
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/script.js"></script>
-</body>
 
+</body>
 </html>

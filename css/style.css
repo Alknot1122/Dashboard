@@ -69,6 +69,7 @@ h4 {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     margin-bottom: 24px;
     border-radius: 10px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .card h4 {
@@ -115,4 +116,27 @@ h4 {
 .card-body h4 {
     font-size: 1.5rem;
     color: gray;
+}
+
+.card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+#sidebar {
+    max-width: 264px;
+    min-width: 264px;
+    background: var(--bs-dark);
+    transition: all 0.35s ease-in-out;
+}
+
+#sidebar.collapsed {
+    min-width: 0px;
+    max-width: 0px;
+}
+
+#sidebar-toggle {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
 }
