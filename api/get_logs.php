@@ -16,18 +16,23 @@ try {
         $perPage = 10; 
         $start = ($page - 1) * $perPage;
 
-        $stmt = $conn->prepare("SELECT * FROM update_log WHERE sensor_id = :sensor_id ORDER BY datetime DESC LIMIT 30");
-        $stmt->bindParam(':sensor_id', $sensor_id);
+        $stmt = $conn->prepare("SELECT * FROM update_log WHERE sensor_id = :sensor_id ORDER BY datetime DESC LIMIT :start, :perPage");
+        $stmt->bindParam(':sensor_id', $sensor_id, PDO::PARAM_INT);
+        $stmt->bindParam(':start', $start, PDO::PARAM_INT);
+        $stmt->bindParam(':perPage', $perPage, PDO::PARAM_INT);
         $stmt->execute();
         $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $logsOnPage = array_slice($logs, $start, $perPage);
+        $countStmt = $conn->prepare("SELECT COUNT(*) FROM update_log WHERE sensor_id = :sensor_id");
+        $countStmt->bindParam(':sensor_id', $sensor_id, PDO::PARAM_INT);
+        $countStmt->execute();
+        $totalLogs = $countStmt->fetchColumn();
 
-        $totalPages = ceil(count($logs) / $perPage);
+        $totalPages = ceil(min($totalLogs, 30) / $perPage); 
 
         echo json_encode([
             'status' => 'success',
-            'data' => $logsOnPage,
+            'data' => $logs,
             'pages' => $totalPages
         ]);
     } else {
