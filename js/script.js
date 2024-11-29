@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
         card.addEventListener("click", async () => {
             const sensorId = card.getAttribute("data-sensor-id");
             if (sensorId) {
-                let currentPage = 1; 
+                let currentPage = 1;
                 const logList = document.querySelector("#logList");
                 const pagination = document.querySelector("#pagination");
                 const logMessage = document.querySelector("#logMessage");
@@ -15,8 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     const logs = await response.json();
 
                     if (logs.status === "success") {
-                        logList.innerHTML = ""; 
-                        pagination.innerHTML = ""; 
+                        logList.innerHTML = ""; // Clear previous logs
+                        pagination.innerHTML = ""; // Clear previous pagination
 
                         logs.data.forEach((log) => {
                             const logItem = document.createElement("li");
@@ -33,8 +33,8 @@ document.addEventListener("DOMContentLoaded", () => {
                             pageLink.textContent = i;
                             pageLink.href = "#";
                             pageLink.addEventListener("click", (e) => {
-                                e.preventDefault(); 
-                                fetchLogs(i); 
+                                e.preventDefault();
+                                fetchLogs(i); // Fetch logs for the clicked page
                             });
 
                             pageItem.appendChild(pageLink);
@@ -55,10 +55,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // Sidebar toggle
     const sidebarToggleBtn = document.getElementById('sidebar-toggle');
     const sidebar = document.getElementById('sidebar');
+    const main = document.querySelector('.main');
     
     sidebarToggleBtn.addEventListener('click', () => {
         sidebar.classList.toggle('collapsed');
+        main.classList.toggle('collapsed'); // Adjust the main content when sidebar is collapsed
     });
 });
