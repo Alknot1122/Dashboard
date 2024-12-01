@@ -1,8 +1,9 @@
 <?php
-    $servername = "localhost";
-    $username = "root";
-    $password = "root";
-    $dbname = "admin_dashboard";
+    $servername = getenv('DB_SERVER') ?: 'localhost';  // Default to localhost if not set
+    $username = getenv('MYSQL_USER') ?: 'root';       // Default to root if not set
+    $password = getenv('MYSQL_PASSWORD') ?: '';            // Use empty string if not set
+    $dbname = getenv('MYSQL_DATABASE') ?: 'admin_dashboard';   // Default to admin_dashboard if not set
+
 
     try {
         $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
@@ -39,7 +40,7 @@
             echo json_encode(["status" => "error", "message" => "Invalid data format"]);
         }
     } else {
-        http_response_code(405); 
+        // http_response_code(405); 
         echo json_encode(["status" => "error", "message" => "Invalid request method"]);
     }
 ?>

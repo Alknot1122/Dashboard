@@ -1,0 +1,32 @@
+version: '3.9' # Use the latest version for additional features
+services:
+    web:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - '80:80'
+        depends_on:
+            - db
+        volumes:
+            - ./:/var/www/html
+        env_file:
+            - .env # Load environment variables from the .env file
+        networks:
+            - app_network
+
+    db:
+        image: mysql:8.1.0 # Ensure the MySQL version matches your project's requirements
+        env_file:
+            - .env
+        volumes:
+            - mysql_data:/var/lib/mysql # Persist database data
+            - ./init:/docker-entrypoint-initdb.d/:ro
+        networks:
+            - app_network
+
+volumes:
+    mysql_data: # Define the named volume for persistent MySQL data
+
+networks:
+    app_network: # Define a custom network to isolate services
