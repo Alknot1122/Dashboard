@@ -8,7 +8,7 @@ USE admin_dashboard;
 CREATE TABLE IF NOT EXISTS sensor_data (
     id INT AUTO_INCREMENT PRIMARY KEY,      -- Primary key to uniquely identify each entry
     sensor_id INT NOT NULL,                 -- Sensor ID (e.g., reference to the sensor)
-    name VARCHAR(255) NOT NULL,              -- Name of the sensor
+    name VARCHAR(255) NOT NULL DEFAULT 'Unnamed Sensor', -- Default value for sensor name
     data_kwh DECIMAL(10, 2) NOT NULL,       -- Power consumption in kWh (stored as a decimal)
     datetime DATETIME NOT NULL,             -- Date and time of the data recording
     gateway_id INT NOT NULL                 -- Gateway ID (e.g., reference to the gateway)

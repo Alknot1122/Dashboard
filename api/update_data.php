@@ -1,8 +1,8 @@
 <?php
-$servername = getenv('DB_SERVER') ?: 'localhost';  
-$username = getenv('MYSQL_USER') ?: 'root';    
-$password = getenv('MYSQL_PASSWORD') ?: '';     
-$dbname = getenv('MYSQL_DATABASE') ?: 'admin_dashboard';  
+    $servername = getenv('DB_SERVER') ?: 'localhost';  // Default to localhost if not set
+    $username = getenv('MYSQL_USER') ?: 'root';       // Default to root if not set
+    $password = getenv('MYSQL_PASSWORD') ?: '';            // Use empty string if not set
+    $dbname = getenv('MYSQL_DATABASE') ?: 'admin_dashboard';   // Default to admin_dashboard if not set
 
 try {
     $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
@@ -19,54 +19,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $gateway_id = $input['gateway_id'];
         $data_kwh = $input['data_kwh'];
         $datetime = date("Y-m-d H:i:s");
+        $name = isset($input['name']) ? $input['name'] : null;  // Check if 'name' is provided
 
         try {
             $conn->beginTransaction();
 
+            // Check if the sensor_id already exists in sensor_data
             $checkStmt = $conn->prepare("
-                SELECT COUNT(*) AS count 
-                FROM sensor_data 
+                SELECT id FROM sensor_data 
                 WHERE sensor_id = :sensor_id AND gateway_id = :gateway_id
             ");
             $checkStmt->bindParam(':sensor_id', $sensor_id);
             $checkStmt->bindParam(':gateway_id', $gateway_id);
             $checkStmt->execute();
-            $sensorExists = $checkStmt->fetch(PDO::FETCH_ASSOC)['count'] > 0;
+            $existingSensor = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$sensorExists) {
-                $insertStmt = $conn->prepare("
-                    INSERT INTO sensor_data (sensor_id, gateway_id, data_kwh, datetime) 
-                    VALUES (:sensor_id, :gateway_id, :data_kwh, :datetime)
-                ");
-                $insertStmt->bindParam(':sensor_id', $sensor_id);
-                $insertStmt->bindParam(':gateway_id', $gateway_id);
-                $insertStmt->bindParam(':data_kwh', $data_kwh);
-                $insertStmt->bindParam(':datetime', $datetime);
-
-                if (!$insertStmt->execute()) {
-                    throw new Exception("Failed to insert new sensor");
-                }
-            } else {
-                $updateStmt = $conn->prepare("
+            if ($existingSensor) {
+                // Update the existing sensor data
+                $stmt = $conn->prepare("
                     UPDATE sensor_data 
                     SET data_kwh = :data_kwh, datetime = :datetime 
                     WHERE sensor_id = :sensor_id AND gateway_id = :gateway_id
                 ");
-                $updateStmt->bindParam(':sensor_id', $sensor_id);
-                $updateStmt->bindParam(':gateway_id', $gateway_id);
-                $updateStmt->bindParam(':data_kwh', $data_kwh);
-                $updateStmt->bindParam(':datetime', $datetime);
+                $stmt->bindParam(':sensor_id', $sensor_id);
+                $stmt->bindParam(':gateway_id', $gateway_id);
+                $stmt->bindParam(':data_kwh', $data_kwh);
+                $stmt->bindParam(':datetime', $datetime);
 
-                if (!$updateStmt->execute()) {
+                if (!$stmt->execute()) {
                     throw new Exception("Failed to update the data");
                 }
+                $sensorIdForLog = $existingSensor['id'];  // Use the ID from the sensor_data table
+            } else {
+                // Insert a new sensor data record
+                $stmt = $conn->prepare("
+                    INSERT INTO sensor_data (sensor_id, gateway_id, data_kwh, datetime, name) 
+                    VALUES (:sensor_id, :gateway_id, :data_kwh, :datetime, :name)
+                ");
+                $stmt->bindParam(':sensor_id', $sensor_id);
+                $stmt->bindParam(':gateway_id', $gateway_id);
+                $stmt->bindParam(':data_kwh', $data_kwh);
+                $stmt->bindParam(':datetime', $datetime);
+
+                // Only bind the 'name' parameter if it's provided
+                if ($name !== null) {
+                    $stmt->bindParam(':name', $name);
+                } else {
+                    // Bind a null value if 'name' is not provided
+                    $nullValue = null;
+                    $stmt->bindParam(':name', $nullValue, PDO::PARAM_NULL);
+                }
+
+                if (!$stmt->execute()) {
+                    throw new Exception("Failed to insert new data");
+                }
+
+                // Get the last inserted ID from the sensor_data table
+                $sensorIdForLog = $conn->lastInsertId();  
             }
 
+            // Log the update or insert action using the correct sensor_id
             $logStmt = $conn->prepare("
                 INSERT INTO update_log (sensor_id, data_kwh, datetime) 
                 VALUES (:sensor_id, :data_kwh, :datetime)
             ");
-            $logStmt->bindParam(':sensor_id', $sensor_id);
+            $logStmt->bindParam(':sensor_id', $sensorIdForLog);  // Use the ID from sensor_data
             $logStmt->bindParam(':data_kwh', $data_kwh);
             $logStmt->bindParam(':datetime', $datetime);
 
