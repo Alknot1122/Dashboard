@@ -24,6 +24,12 @@ try {
         $stmt->execute();
         $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        foreach ($logs as &$log) {
+            $datetime = new DateTime($log['datetime'], new DateTimeZone('UTC'));
+            $datetime->setTimezone(new DateTimeZone('Asia/Bangkok'));
+            $log['datetime'] = $datetime->format('Y-m-d H:i:s');  
+        }
+
         $countStmt = $conn->prepare("SELECT COUNT(*) FROM update_log WHERE sensor_id = :sensor_id");
         $countStmt->bindParam(':sensor_id', $sensor_id, PDO::PARAM_INT);
         $countStmt->execute();

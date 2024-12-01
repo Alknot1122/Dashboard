@@ -69,11 +69,13 @@ $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="row">
                         <?php foreach ($results as $row): ?>
                         <?php
-                            $formatted_kwh = is_float($row['data_kwh']) && floor($row['data_kwh']) != $row['data_kwh']
-                                ? number_format($row['data_kwh'], 2)
-                                : number_format($row['data_kwh']);
-                            
+                            $formatted_kwh = number_format($row['data_kwh'], 2);
+
                             $formatted_id = sprintf("ID %02d: %s", $row['sensor_id'], $row['name']);
+
+                            $datetime = new DateTime($row['datetime'], new DateTimeZone('UTC'));
+                            $datetime->setTimezone(new DateTimeZone('Asia/Bangkok'));
+                            $formatted_datetime = $datetime->format('Y-m-d H:i:s');
                             ?>
                         <div class="col-12 col-md-3 d-flex">
                             <div class="card flex-fill border-0 shadow-lg"
@@ -90,7 +92,7 @@ $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <div class="divider"></div>
 
                                         <p class="text-muted small">Last Updated:
-                                            <strong><?php echo htmlspecialchars($row['datetime']); ?></strong>
+                                            <strong><?php echo htmlspecialchars($formatted_datetime); ?></strong>
                                         </p>
                                     </div>
                                 </div>
