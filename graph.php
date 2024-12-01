@@ -1,4 +1,7 @@
 <?php
+date_default_timezone_set('Asia/Bangkok');
+
+// Database connection
 $servername = getenv('DB_SERVER') ?: 'localhost';  // Default to localhost if not set
 $username = getenv('MYSQL_USER') ?: 'root';       // Default to root if not set
 $password = getenv('MYSQL_PASSWORD') ?: '';            // Use empty string if not set
@@ -7,6 +10,8 @@ $dbname = getenv('MYSQL_DATABASE') ?: 'admin_dashboard';   // Default to admin_d
 try {
     $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $conn->exec("SET time_zone = 'Asia/Bangkok';");
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }
@@ -14,28 +19,34 @@ try {
 $currentDate = date("Y-m-d");
 
 $stmt = $conn->prepare("
-    SELECT sensor_id, HOUR(datetime) AS hour, SUM(data_kwh) AS total_kwh
+    SELECT sensor_id, 
+           CONVERT_TZ(datetime, '+00:00', '+07:00') AS datetime, 
+           data_kwh
     FROM update_log
-    WHERE DATE(datetime) = :currentDate
-    GROUP BY sensor_id, HOUR(datetime)
-    ORDER BY hour ASC
+    WHERE DATE(CONVERT_TZ(datetime, '+00:00', '+07:00')) = :currentDate
+    ORDER BY datetime ASC
 ");
 $stmt->bindParam(':currentDate', $currentDate);
 $stmt->execute();
 $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $graphData = [];
-$labels = [];
+$timeLabels = [];
+
 foreach ($logs as $log) {
     $sensorId = $log['sensor_id'];
-    $hour = $log['hour'];
-    $dataKwh = $log['total_kwh'];
+    $time = date("H:i:s", strtotime($log['datetime']));
+    $dataKwh = $log['data_kwh'];
 
     if (!isset($graphData[$sensorId])) {
-        $graphData[$sensorId] = array_fill(0, 24, 0);
+        $graphData[$sensorId] = [];
     }
 
-    $graphData[$sensorId][$hour] = $dataKwh;
+    $graphData[$sensorId][$time] = $dataKwh;
+
+    if (!in_array($time, $timeLabels)) {
+        $timeLabels[] = $time;
+    }
 }
 
 $datasets = [];
@@ -104,7 +115,7 @@ foreach ($graphData as $sensorId => $data) {
             <main class="content px-3 py-2">
                 <div class="container-fluid">
                     <div class="mb-3">
-                        <h4>Sensor Data for Today (Hourly)</h4>
+                        <h4>Sensor Data (Real-Time Updates)</h4>
                     </div>
                     <div class="row">
                         <div class="col-12">
@@ -114,9 +125,7 @@ foreach ($graphData as $sensorId => $data) {
                             var sensorGraph = new Chart(ctx, {
                                 type: 'line',
                                 data: {
-                                    labels: Array.from({
-                                        length: 24
-                                    }, (_, i) => i + ":00"),
+                                    labels: <?php echo json_encode($timeLabels); ?>,
                                     datasets: <?php echo json_encode($datasets); ?>
                                 },
                                 options: {
@@ -125,11 +134,7 @@ foreach ($graphData as $sensorId => $data) {
                                         x: {
                                             title: {
                                                 display: true,
-                                                text: 'Hour of the Day'
-                                            },
-                                            ticks: {
-                                                maxRotation: 90,
-                                                autoSkip: true
+                                                text: 'Time (HH:mm:ss)'
                                             }
                                         },
                                         y: {
