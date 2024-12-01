@@ -14,15 +14,18 @@ CREATE TABLE IF NOT EXISTS sensor_data (
     gateway_id INT NOT NULL                 -- Gateway ID (e.g., reference to the gateway)
 );
 
+-- Create the index for faster search on sensor_id
+CREATE INDEX idx_sensor_id ON sensor_data(sensor_id);
+
 -- Create the update_log table
 CREATE TABLE IF NOT EXISTS update_log (
     id INT AUTO_INCREMENT PRIMARY KEY,
     sensor_id INT NOT NULL,
     data_kwh DECIMAL(10, 2) NOT NULL,
     datetime DATETIME NOT NULL,
-    FOREIGN KEY (sensor_id) REFERENCES sensor_data(id) ON DELETE CASCADE
+    FOREIGN KEY (sensor_id) REFERENCES sensor_data(sensor_id) ON DELETE CASCADE
 );
 
--- Optionally, create an index for faster search operations
-CREATE INDEX idx_sensor_id ON sensor_data(sensor_id);
+
+-- Optionally, create an index for gateway_id
 CREATE INDEX idx_gateway_id ON sensor_data(gateway_id);
